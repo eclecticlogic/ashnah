@@ -82,6 +82,7 @@ public abstract class AbstractEGit<T extends AbstractEGit<?>> {
     protected File createBaseDir() {
         try {
             final File basedir = Files.createTempDirectory("config-repo-").toFile();
+            logger.info("Creating base dir at {}", basedir.getAbsolutePath());
             Runtime.getRuntime().addShutdownHook(new Thread() {
 
                 @Override

@@ -16,6 +16,8 @@
  */
 package com.eclecticlogic.ashnah.git;
 
+import org.eclipse.jgit.lib.Ref;
+
 import com.netflix.config.PollResult;
 import com.netflix.config.PolledConfigurationSource;
 
@@ -25,38 +27,36 @@ import com.netflix.config.PolledConfigurationSource;
  */
 public class GitConfigurationSource implements PolledConfigurationSource {
 
-    private String serverUri;
-    private String username;
-    private String password;
+    private EGit git;
+    private String label;
 
 
-    public String getServerUri() {
-        return serverUri;
+    public EGit getGit() {
+        return git;
     }
 
 
-    public void setServerUri(String serverUri) {
-        this.serverUri = serverUri;
+    public void setGit(EGit git) {
+        this.git = git;
     }
 
 
-    public String getUsername() {
-        return username;
+    public String getLabel() {
+        return label;
     }
 
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
 
-    public String getPassword() {
-        return password;
-    }
-
-
-    public void setPassword(String password) {
-        this.password = password;
+    public void init() {
+        git.getRepository().getConfig().setString("branch", label, "merge", label);
+        Ref ref = git.checkout(label);
+        if (git.shouldPull(ref)) {
+            git.pull(label, ref);
+        }
     }
 
 

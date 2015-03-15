@@ -16,6 +16,9 @@
  */
 package com.eclecticlogic.ashnah;
 
+import com.eclecticlogic.ashnah.git.EGit;
+import com.eclecticlogic.ashnah.git.GitConfigurationSource;
+
 
 /**
  * @author kabram.
@@ -23,4 +26,13 @@ package com.eclecticlogic.ashnah;
  */
 public class Test {
 
+    
+    public static void main(String[] args) {
+        EGit git = new EGit().setUri("git@github.com:eclecticlogic/whisper.git");
+        git.initialize();
+        GitConfigurationSource source = new GitConfigurationSource();
+        source.setGit(git);
+        source.setLabel("master");
+        source.init();
+    }
 }

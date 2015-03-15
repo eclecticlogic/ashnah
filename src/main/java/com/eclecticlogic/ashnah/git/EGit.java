@@ -29,9 +29,11 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshSessionFactory;
@@ -132,6 +134,52 @@ public class EGit extends AbstractEGit<EGit> {
     }
 
 
+    public Ref checkout(String label) {
+        CheckoutCommand checkout = git.checkout();
+        if (shouldTrack(label)) {
+            trackBranch(checkout, label);
+        } else {
+            // works for tags and local branches
+            checkout.setName(label);
+        }
+        try {
+            return checkout.call();
+        } catch (GitAPIException e) {
+            throw new GitRuntimeException(e);
+        }
+    }
+
+
+    public boolean shouldPull(Ref ref) {
+        try {
+            return git.status().call().isClean() && ref != null
+                    && git.getRepository().getConfig().getString("remote", "origin", "url") != null;
+        } catch (GitAPIException e) {
+            throw new GitRuntimeException(e);
+        }
+    }
+
+
+    public boolean shouldTrack(String label) {
+        return isBranch(label) && !isLocalBranch(label);
+    }
+
+
+    /**
+     * Assumes we are on a tracking branch (should be safe)
+     */
+    public void pull(String label, Ref ref) {
+        PullCommand pull = git.pull();
+        try {
+            setCredentialsProvider(pull);
+            pull.call();
+        } catch (Exception e) {
+            logger.warn("Could not pull remote for " + label + " (current ref=" + ref + "), remote: "
+                    + git.getRepository().getConfig().getString("remote", "origin", "url"));
+        }
+    }
+
+
     public void fetch() {
         try {
             FetchCommand fetch = git.fetch();
@@ -197,5 +245,10 @@ public class EGit extends AbstractEGit<EGit> {
         if (!Strings.isNullOrEmpty(getUsername())) {
             cmd.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
         }
+    }
+
+
+    public Repository getRepository() {
+        return git.getRepository();
     }
 }
